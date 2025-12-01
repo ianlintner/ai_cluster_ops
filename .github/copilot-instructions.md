@@ -350,7 +350,7 @@ When asked to deploy an app, generate:
 1. [ ] `k8s/deployment.yaml` - Deployment with all required annotations
 2. [ ] `k8s/service.yaml` - ClusterIP service
 3. [ ] `k8s/virtualservice.yaml` - Istio VirtualService
-4. [ ] `k8s/secrets.yaml` - Secrets (if needed, with placeholder values)
+4. [ ] `k8s/secretproviderclass.yaml` - Azure Key Vault secrets (if app needs secrets)
 5. [ ] `k8s/configmap.yaml` - ConfigMap (if needed)
 6. [ ] `.github/workflows/deploy.yaml` - CI/CD pipeline
 7. [ ] `Dockerfile` - If not present
@@ -382,6 +382,7 @@ curl -I https://<app-name>.cat-herding.net
 5. ❌ Missing health probes
 6. ❌ Missing resource limits
 7. ❌ Privileged containers (use securityContext)
+8. ❌ **Storing secrets in manifests or Git** - use Azure Key Vault
 
 ## Example: Deploy a New App
 
@@ -391,10 +392,12 @@ curl -I https://<app-name>.cat-herding.net
 1. Deployment with Node.js container, health probes, Istio sidecar
 2. Service on port 80 targeting container port 3000
 3. VirtualService for widgets-api.cat-herding.net
-4. GitHub Actions workflow
-5. Dockerfile (if missing)
+4. SecretProviderClass for Key Vault secrets (if needed)
+5. GitHub Actions workflow
+6. Dockerfile (if missing)
 
 **Don't generate**:
 - Gateway (use shared)
 - Certificate (wildcard covers it)
 - Ingress (we use Istio VirtualService)
+- **Secrets with hardcoded values** (use Key Vault instead)

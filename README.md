@@ -6,6 +6,35 @@ A comprehensive knowledge base and automation toolkit for rapidly onboarding new
 
 This repository enables engineers (and AI assistants like GitHub Copilot) to quickly deploy new services to our Kubernetes cluster with minimal manual configuration. Simply provide Copilot with access to this repo and describe your app - it will generate all the necessary Kubernetes manifests, Helm charts, and CI/CD pipelines.
 
+## 🤖 GitHub Copilot Agent
+
+This repo includes a custom Copilot agent for automated deployments. Use `@aks-deploy` in Copilot Chat:
+
+```
+@aks-deploy Deploy my Node.js API called user-service
+```
+
+```
+@aks-deploy Create a Python Flask app with GitHub OAuth authentication
+```
+
+### Agent Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `.github/agents/aks-deploy.md` | Custom agent definition for Copilot |
+| `.github/copilot-chat-agent.md` | Detailed agent instructions with self-update protocol |
+| `.github/copilot-agent.yml` | Machine-readable agent configuration |
+| `.github/copilot-instructions.md` | Complete deployment instructions |
+
+### Self-Updating Agent
+
+The agent is configured to fetch the latest configuration from this repository before generating manifests. This ensures deployments always use current:
+- Cluster configuration
+- Gateway references
+- Security requirements
+- Key Vault identity
+
 ## 📋 Quick Start
 
 ### For Engineers with Copilot
@@ -51,13 +80,18 @@ See [docs/ONBOARDING.md](docs/ONBOARDING.md) for step-by-step instructions.
 ```
 ai_cluster_ops/
 ├── .github/
+│   ├── agents/
+│   │   └── aks-deploy.md          # Custom Copilot agent
+│   ├── copilot-agent.yml          # Agent configuration (YAML)
+│   ├── copilot-chat-agent.md      # Agent instructions
 │   ├── copilot-instructions.md    # AI assistant context
 │   └── workflows/                  # Reusable CI/CD templates
 ├── docs/
 │   ├── CLUSTER_OVERVIEW.md        # Detailed cluster architecture
 │   ├── ONBOARDING.md              # Step-by-step guide
 │   ├── TROUBLESHOOTING.md         # Common issues & solutions
-│   └── SECURITY.md                # Security best practices
+│   ├── SECURITY.md                # Security best practices
+│   └── OBSERVABILITY.md           # OpenTelemetry integration
 ├── helm/
 │   └── app-template/              # Base Helm chart for apps
 ├── manifests/
