@@ -1,6 +1,6 @@
-# Decommissioned Applications
+# Decommissioned applications
 
-This directory contains records of applications that have been removed from the bigboy cluster.
+This directory contains records of applications that have been removed from the `bigboy` AKS cluster.
 
 ## Purpose
 
@@ -9,11 +9,11 @@ This directory contains records of applications that have been removed from the 
 - Provide reference for historical deployments
 - Aid in capacity planning and cost analysis
 
-## File Naming Convention
+## File naming convention
 
 Each decommissioned app should have a file: `<app-name>.md`
 
-## Required Information
+## Required information
 
 Each decommission record should include:
 - Decommission date
@@ -23,6 +23,6 @@ Each decommission record should include:
 - Migration path (if applicable)
 - Checklist of cleaned resources
 
-## Example Entry
+## Example entry
 
-See the template created during decommission process.
+See the template created during the decommission process.

@@ -1,10 +1,10 @@
-# App Onboarding Guide
+# Application onboarding guide
 
-This guide walks you through deploying a new application to the **bigboy** AKS cluster.
+This guide walks you through deploying a new application to the `bigboy` AKS cluster.
 
 ## Prerequisites
 
-### 1. CLI Tools
+### 1. CLI tools
 
 Ensure you have these tools installed:
 
@@ -19,7 +19,7 @@ kubectl version --client
 helm version
 ```
 
-### 2. Azure Login
+### 2. Azure login
 
 ```bash
 # Login to Azure
@@ -29,16 +29,16 @@ az login
 az aks get-credentials --resource-group nekoc --name bigboy
 ```
 
-### 3. ACR Access
+### 3. ACR access
 
 ```bash
 # Login to container registry
 az acr login --name gabby
 ```
 
-## Quick Start: Deploy in 5 Minutes
+## Quick start: deploy in 5 minutes
 
-### Option A: Using Helm Chart (Recommended)
+### Option A: Using Helm chart (recommended)
 
 ```bash
 # Clone ai_cluster_ops
@@ -54,7 +54,7 @@ helm upgrade --install myapp ./helm/app-template \
   --set app.containerPort=8080
 ```
 
-### Option B: Using kubectl with Templates
+### Option B: Using kubectl with templates
 
 ```bash
 # Copy templates
@@ -66,9 +66,9 @@ cp templates/istio/virtualservice.yaml k8s/virtualservice.yaml
 kubectl apply -f k8s/
 ```
 
-## Deployment Types
+## Deployment types
 
-### 1. Simple Web App (No Auth)
+### 1. Simple web app (no auth)
 
 **Use case**: Public APIs, static sites, internal tools
 
@@ -80,7 +80,7 @@ helm upgrade --install myapp ./helm/app-template \
   --set app.containerPort=3000
 ```
 
-### 2. Web App with GitHub OAuth
+### 2. Web app with GitHub OAuth
 
 **Use case**: Internal dashboards, admin panels
 
@@ -93,7 +93,7 @@ helm upgrade --install myapp ./helm/app-template \
   --set oauth2Proxy.enabled=true
 ```
 
-### 3. API with Database
+### 3. API with database
 
 **Use case**: Backend services with state
 
@@ -111,9 +111,9 @@ helm upgrade --install myapp ./helm/app-template \
   --set secrets[0]=myapp-secrets
 ```
 
-## Step-by-Step Guide
+## Step-by-step guide
 
-### Step 1: Containerize Your App
+### Step 1: Containerize your app
 
 Create a `Dockerfile` in your app repository:
 
@@ -138,7 +138,7 @@ CMD ["node", "server.js"]
 - Don't run as PID 1 or use init systems
 - Include a health endpoint
 
-### Step 2: Add Health Check Endpoint
+### Step 2: Add health check endpoint
 
 Your app MUST expose a health endpoint:
 
@@ -156,7 +156,7 @@ def health():
     return {'status': 'healthy'}, 200
 ```
 
-### Step 3: Build and Push Image
+### Step 3: Build and push image
 
 ```bash
 # Build
@@ -166,9 +166,9 @@ docker build -t gabby.azurecr.io/myapp:latest .
 docker push gabby.azurecr.io/myapp:latest
 ```
 
-### Step 4: Create Kubernetes Manifests
+### Step 4: Create Kubernetes manifests
 
-**Option A: Create values.yaml for Helm**
+**Option A: Create `values.yaml` for Helm**
 
 ```yaml
 # myapp-values.yaml
@@ -225,9 +225,9 @@ kubectl get virtualservice myapp
 curl -I https://myapp.cat-herding.net
 ```
 
-## Environment Variables & Secrets
+## Environment variables and secrets
 
-### ConfigMaps (Non-Sensitive)
+### ConfigMaps (non-sensitive)
 
 ```yaml
 apiVersion: v1
@@ -239,7 +239,7 @@ data:
   FEATURE_FLAG: "true"
 ```
 
-### Secrets (Sensitive)
+### Secrets (sensitive)
 
 ```bash
 # Create from literals
@@ -261,13 +261,13 @@ configMaps:
   - myapp-config
 ```
 
-## DNS & TLS
+## DNS and TLS
 
-### Subdomains of cat-herding.net
+### Subdomains of `cat-herding.net`
 
 **No action needed!** The wildcard DNS (`*.cat-herding.net`) and TLS certificate are already configured. Just create your VirtualService and you're done.
 
-### Custom Domains
+### Custom domains
 
 1. Create a Certificate:
 ```bash
@@ -292,7 +292,7 @@ EOF
 
 ## Troubleshooting
 
-### Pod Not Starting
+### Pod not starting
 
 ```bash
 # Check events
@@ -318,7 +318,7 @@ kubectl get virtualservice myapp -o yaml
 kubectl get pods -l app=myapp
 ```
 
-### Certificate Issues
+### Certificate issues
 
 ```bash
 # Check certificate status
@@ -338,7 +338,7 @@ helm uninstall myapp
 kubectl delete -f k8s/
 ```
 
-## Next Steps
+## Next steps
 
 - Set up [CI/CD with GitHub Actions](.github/workflows/deploy-template.yaml)
 - Configure [monitoring with OpenTelemetry](docs/OBSERVABILITY.md)

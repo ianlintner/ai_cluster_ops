@@ -1,8 +1,8 @@
-# GitHub Copilot Custom Agent Configuration
-# This agent helps onboard applications to the bigboy AKS cluster
+# GitHub Copilot custom agent configuration
+# This agent helps onboard applications to the `bigboy` AKS cluster
 
 name: "AKS Cluster Ops Agent"
-description: "AI assistant for deploying and managing applications on the bigboy AKS cluster"
+description: "AI assistant for deploying and managing applications on the `bigboy` AKS cluster"
 version: "1.0.0"
 
 # Agent identity

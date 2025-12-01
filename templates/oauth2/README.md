@@ -1,6 +1,6 @@
-# OAuth2 Proxy Templates
+# OAuth2 proxy templates
 
-This directory contains templates for adding GitHub OAuth authentication to your applications.
+This directory contains templates for adding GitHub OAuth authentication to your applications on the `bigboy` AKS cluster.
 
 ## Architecture
 
@@ -26,7 +26,7 @@ These are configured for SSO across all `*.cat-herding.net` domains.
 
 ## Usage
 
-### Option 1: Use Helm Chart (Recommended)
+### Option 1: Use Helm chart (recommended)
 
 ```yaml
 # values.yaml
@@ -41,7 +41,7 @@ app:
 helm upgrade --install myapp ./helm/app-template -f values.yaml
 ```
 
-### Option 2: Manual Manifests
+### Option 2: Manual manifests
 
 1. Copy the templates from this directory
 2. Replace placeholders:
@@ -49,7 +49,7 @@ helm upgrade --install myapp ./helm/app-template -f values.yaml
    - `<IMAGE>`: Your container image
    - `<APP_PORT>`: Your application's internal port
 
-## How It Works
+## How it works
 
 1. User visits `https://myapp.cat-herding.net`
 2. OAuth2 Proxy checks for valid session cookie
@@ -59,7 +59,7 @@ helm upgrade --install myapp ./helm/app-template -f values.yaml
 6. OAuth2 Proxy sets session cookie and redirects to original URL
 7. All subsequent requests pass through with user info headers
 
-## Headers Available to Your App
+## Headers available to your app
 
 OAuth2 Proxy adds these headers to authenticated requests:
 

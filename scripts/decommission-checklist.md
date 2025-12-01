@@ -1,4 +1,4 @@
-## Application Decommission Checklist
+# Application decommission checklist
 
 **Application Name**: _________________  
 **Decommission Date**: _________________  

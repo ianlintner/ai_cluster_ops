@@ -1,20 +1,20 @@
-# Observability Guide
+# Observability guide
 
-A comprehensive guide to instrumenting your applications with OpenTelemetry, implementing structured logging, collecting metrics, and following observability best practices on the bigboy cluster.
+A comprehensive guide to instrumenting your applications with OpenTelemetry, implementing structured logging, collecting metrics, and following observability best practices on the `bigboy` AKS cluster.
 
-## Table of Contents
+## Table of contents
 
-- [OpenTelemetry Integration](#opentelemetry-integration)
-- [Distributed Tracing](#distributed-tracing)
-- [Metrics Collection](#metrics-collection)
-- [Structured Logging](#structured-logging)
-- [Health Checks](#health-endpoints)
+- [OpenTelemetry integration](#opentelemetry-integration)
+- [Distributed tracing](#distributed-tracing)
+- [Metrics collection](#metrics-collection)
+- [Structured logging](#structured-logging)
+- [Health endpoints](#health-endpoints)
 - [Alerting](#alerts-azure-monitor)
-- [Best Practices](#observability-best-practices)
+- [Observability best practices](#observability-best-practices)
 
 ---
 
-## The Three Pillars of Observability
+## The three pillars of observability
 
 ```mermaid
 graph TB
@@ -58,18 +58,18 @@ graph TB
     style MONITOR fill:#10B981
 ```
 
-## OpenTelemetry Integration
+## OpenTelemetry integration
 
 The cluster runs a centralized OpenTelemetry Collector that can receive traces and metrics from your applications.
 
-### Collector Endpoints
+### Collector endpoints
 
 | Protocol | Endpoint | Port |
 |----------|----------|------|
 | gRPC | otel-collector.default.svc.cluster.local | 4317 |
 | HTTP | otel-collector.default.svc.cluster.local | 4318 |
 
-### Quick Setup
+### Quick setup
 
 Add these environment variables to your deployment:
 
@@ -90,7 +90,7 @@ otel:
   enabled: true
 ```
 
-### Language-Specific Setup
+### Language-specific setup
 
 #### Node.js
 
@@ -115,11 +115,11 @@ sdk.start();
 
 ---
 
-## Distributed Tracing
+## Distributed tracing
 
 Distributed tracing helps you understand request flows across multiple services.
 
-### Trace Context Propagation
+### Trace context propagation
 
 ```mermaid
 sequenceDiagram
@@ -151,9 +151,9 @@ sequenceDiagram
     Note over Collector: Correlate spans<br/>by trace_id
 ```
 
-### Best Practices for Tracing
+### Best practices for tracing
 
-#### 1. Always Propagate Context
+#### 1. Always propagate context
 
 ```javascript
 // Node.js - Automatic with OpenTelemetry
@@ -171,7 +171,7 @@ import requests
 response = requests.get('http://other-service/api')
 ```
 
-#### 2. Add Custom Spans for Important Operations
+#### 2. Add custom spans for important operations
 
 ```javascript
 // Node.js

@@ -1,12 +1,12 @@
 ---
 name: aks-deploy
-description: Deploy applications to the bigboy AKS cluster
+description: Deploy applications to the `bigboy` AKS cluster
 version: 1.0.0
 ---
 
-# @aks-deploy Agent
+# @aks-deploy agent
 
-I am an AI agent specialized in deploying applications to the **bigboy** AKS cluster. I help you quickly onboard new services with proper Kubernetes manifests, Helm charts, and CI/CD pipelines.
+I am an AI agent specialized in deploying applications to the `bigboy` AKS cluster. I help you quickly onboard new services with proper Kubernetes manifests, Helm charts, and CI/CD pipelines.
 
 ## How to Use Me
 

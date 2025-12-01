@@ -1,10 +1,10 @@
-# Security Best Practices
+# Security best practices
 
-Security guidelines for applications deployed to the bigboy cluster.
+Security guidelines for applications deployed to the `bigboy` AKS cluster.
 
-## Container Security
+## Container security
 
-### Required Security Context
+### Required security context
 
 All deployments MUST include these security settings:
 
@@ -28,7 +28,7 @@ spec:
         readOnlyRootFilesystem: true  # Recommended
 ```
 
-### Dockerfile Best Practices
+### Dockerfile best practices
 
 ```dockerfile
 # Use specific version, not latest
@@ -53,7 +53,7 @@ EXPOSE 8080
 CMD ["node", "server.js"]
 ```
 
-### Image Scanning
+### Image scanning
 
 Images pushed to `gabby.azurecr.io` should be scanned for vulnerabilities:
 
@@ -65,11 +65,11 @@ az acr config content-trust update --registry gabby --status enabled
 az acr repository show-manifests --name gabby --repository myapp --detail
 ```
 
-## Secrets Management
+## Secrets management
 
-> ⚠️ **CRITICAL**: Never store secrets in Kubernetes manifests, Git repositories, or environment variables in Dockerfiles. Always use Azure Key Vault.
+> ⚠️ **CRITICAL**: **Never** store secrets in Kubernetes manifests, Git repositories, or environment variables in Dockerfiles. Always use Azure Key Vault.
 
-### DO NOT
+### Do not
 
 - ❌ Hardcode secrets in code or manifests
 - ❌ Commit secrets to Git (even encrypted)
@@ -79,7 +79,7 @@ az acr repository show-manifests --name gabby --repository myapp --detail
 - ❌ Pass secrets as command-line arguments
 - ❌ Include secrets in container images
 
-### DO
+### Do
 
 - ✅ **Use Azure Key Vault** for all secrets
 - ✅ Use managed identities for authentication
@@ -90,7 +90,7 @@ az acr repository show-manifests --name gabby --repository myapp --detail
 
 ---
 
-## Azure Key Vault Integration
+## Azure Key Vault integration
 
 The cluster has **Azure Key Vault Secrets Provider** enabled with automatic secret rotation every 2 minutes.
 
@@ -116,7 +116,7 @@ az keyvault secret set \
   --value "your-api-key"
 ```
 
-### Step 2: Grant Access to AKS Managed Identity
+### Step 2: Grant access to AKS managed identity
 
 ```bash
 # Get the AKS Key Vault identity
@@ -132,7 +132,7 @@ az role assignment create \
   --scope $KV_RESOURCE_ID
 ```
 
-### Step 3: Create SecretProviderClass
+### Step 3: Create `SecretProviderClass`
 
 Create a `SecretProviderClass` to define which secrets to sync:
 
@@ -169,9 +169,9 @@ spec:
           key: API_KEY
 ```
 
-### Step 4: Mount Secrets in Deployment
+### Step 4: Mount secrets in deployment
 
-**Option A: Mount as Files (Recommended)**
+**Option A: Mount as files (recommended)**
 
 ```yaml
 apiVersion: apps/v1
@@ -201,7 +201,7 @@ Secrets will be available as files:
 - `/mnt/secrets/database-password`
 - `/mnt/secrets/api-key`
 
-**Option B: Sync to Environment Variables**
+**Option B: Sync to environment variables**
 
 If your app requires environment variables (use the `secretObjects` section above):
 
@@ -242,14 +242,14 @@ spec:
 
 > **Note**: The CSI volume must still be mounted for the secret sync to work.
 
-### Secret Rotation
+### Secret rotation
 
 Secrets are automatically rotated every 2 minutes. Your app should:
 
 1. **For file-mounted secrets**: Re-read the file when needed (don't cache)
 2. **For env var secrets**: Pod restart may be required for updated values
 
-### Complete Example: App with Key Vault Secrets
+### Complete example: app with Key Vault secrets
 
 ```yaml
 ---
@@ -346,7 +346,7 @@ spec:
           effect: NoSchedule
 ```
 
-### Troubleshooting Key Vault Secrets
+### Troubleshooting Key Vault secrets
 
 ```bash
 # Check SecretProviderClass
@@ -362,13 +362,13 @@ kubectl logs -n kube-system -l app=secrets-store-csi-driver
 az keyvault secret list --vault-name myapp-kv
 ```
 
-## Network Security
+## Network security
 
 ### Istio mTLS
 
 Istio automatically enables mutual TLS between services. All service-to-service traffic is encrypted.
 
-### Network Policies (Optional)
+### Network policies (optional)
 
 For additional isolation, create NetworkPolicies:
 

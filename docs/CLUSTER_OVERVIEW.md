@@ -1,6 +1,6 @@
-# Bigboy AKS Cluster Overview
+# `bigboy` AKS cluster overview
 
-## Cluster Information
+## Cluster information
 
 | Property | Value |
 |----------|-------|
@@ -22,7 +22,7 @@
 | `cert-manager` | TLS certificate management |
 | `security-agency` | Example isolated app namespace |
 
-## Container Registry
+## Container registry
 
 | Property | Value |
 |----------|-------|
@@ -31,7 +31,7 @@
 | **SKU** | Basic |
 | **Admin Enabled** | Yes |
 
-### Pushing Images
+### Pushing images
 
 ```bash
 # Login to ACR
@@ -42,7 +42,7 @@ docker tag myapp:latest gabby.azurecr.io/myapp:latest
 docker push gabby.azurecr.io/myapp:latest
 ```
 
-## Istio Service Mesh
+## Istio service mesh
 
 ### Configuration
 
@@ -51,14 +51,14 @@ docker push gabby.azurecr.io/myapp:latest
 - **External Ingress**: Enabled (LoadBalancer)
 - **Internal Ingress**: Enabled (Internal LoadBalancer)
 
-### Ingress Gateway IPs
+### Ingress gateway IPs
 
 | Gateway | Type | IP | Ports |
 |---------|------|----|----|
 | External | LoadBalancer | 52.182.228.75 | 80, 443, 15021 |
 | Internal | Internal LB | 10.224.0.5 | 80, 443, 15021 |
 
-### Enabling Istio Sidecar
+### Enabling Istio sidecar
 
 Add this annotation to your pod spec:
 
@@ -68,7 +68,7 @@ metadata:
     sidecar.istio.io/inject: "true"
 ```
 
-### Sidecar Resource Configuration (Recommended)
+### Sidecar resource configuration (recommended)
 
 ```yaml
 annotations:
@@ -78,16 +78,16 @@ annotations:
   sidecar.istio.io/proxyMemoryLimit: "256Mi"
 ```
 
-## DNS Configuration
+## DNS configuration
 
-### DNS Zones
+### DNS zones
 
 | Zone | Type | Resource Group |
 |------|------|----------------|
 | cat-herding.net | Public | nekoc |
 | hugecat.net | Public | nekoc |
 
-### Wildcard Records
+### Wildcard records
 
 Both zones have wildcard A records pointing to the external ingress:
 
@@ -96,7 +96,7 @@ Both zones have wildcard A records pointing to the external ingress:
 *.hugecat.net → 52.182.228.75
 ```
 
-### Adding a New Subdomain
+### Adding a new subdomain
 
 For most apps, the wildcard DNS handles routing automatically. Just create a VirtualService with the desired hostname. For specific A records:
 
@@ -108,23 +108,23 @@ az network dns record-set a add-record \
   -a 52.182.228.75
 ```
 
-## TLS Certificates
+## TLS certificates
 
-### Cluster Issuers
+### Cluster issuers
 
 | Issuer | Purpose | ACME Server |
 |--------|---------|-------------|
 | letsencrypt-prod | Production certificates | acme-v02.api.letsencrypt.org |
 | letsencrypt-staging | Testing (no rate limits) | acme-staging-v02.api.letsencrypt.org |
 
-### DNS01 Challenge Configuration
+### DNS01 challenge configuration
 
 Certificates use Azure DNS for DNS01 challenges:
 - **Hosted Zone**: hugecat.net
 - **Managed Identity Client ID**: e502213f-1f15-4f03-9fb4-b546f51aafe9
 - **Resource Group**: nekoc
 
-### Wildcard Certificate
+### Wildcard certificate
 
 A wildcard certificate exists for `*.cat-herding.net`:
 
@@ -137,7 +137,7 @@ DNS Names:
   - "cat-herding.net"
 ```
 
-### Shared Gateway
+### Shared gateway
 
 Apps can use the shared gateway which already has the wildcard certificate:
 
@@ -149,7 +149,7 @@ spec:
     - myapp.cat-herding.net
 ```
 
-## Enabled Addons
+## Enabled addons
 
 | Addon | Status | Details |
 |-------|--------|---------|
@@ -157,7 +157,7 @@ spec:
 | Azure Monitor (OMS Agent) | ✅ Enabled | Log Analytics workspace configured |
 | Azure Service Mesh (Istio) | ✅ Enabled | ASM 1.27 |
 
-### Key Vault Integration
+### Azure Key Vault integration
 
 The cluster has Azure Key Vault Secrets Provider enabled:
 - **Client ID**: f2a13db4-007a-46c8-b155-28de1e7d24f6
@@ -208,7 +208,7 @@ See [Security Guide](SECURITY.md#azure-key-vault-integration) for complete examp
 
 ## Observability
 
-### OpenTelemetry Collector
+### OpenTelemetry collector
 
 The cluster runs a centralized OTLP collector:
 
@@ -217,7 +217,7 @@ The cluster runs a centralized OTLP collector:
 | otel-collector.default.svc.cluster.local | 4317 | gRPC |
 | otel-collector.default.svc.cluster.local | 4318 | HTTP |
 
-### Sending Traces from Your App
+### Sending traces from your app
 
 ```yaml
 env:
@@ -227,7 +227,7 @@ env:
     value: "myapp"
 ```
 
-## Node Pools & Tolerations
+## Node pools and tolerations
 
 The cluster uses spot instances. Add tolerations for scheduling:
 
@@ -239,9 +239,9 @@ tolerations:
     effect: "NoSchedule"
 ```
 
-## Security Best Practices
+## Security best practices
 
-### Pod Security Context (Recommended)
+### Pod security context (recommended)
 
 ```yaml
 securityContext:
@@ -258,11 +258,11 @@ containers:
       runAsUser: 1001
 ```
 
-### Network Policies
+### Network policies
 
 Istio provides automatic mTLS between services. Additional network policies can be applied using Kubernetes NetworkPolicy resources.
 
-## Existing Services Reference
+## Existing services reference
 
 | Service | Namespace | Hostname | Port |
 |---------|-----------|----------|------|
@@ -274,7 +274,7 @@ Istio provides automatic mTLS between services. Additional network policies can 
 | example-app | default | example-app.cat-herding.net | 4180 (oauth2-proxy) |
 | inker | default | inker.cat-herding.net | 80 |
 
-## Quick Commands
+## Quick commands
 
 ```bash
 # Get cluster credentials

@@ -1,7 +1,7 @@
-# Cluster Issuer Reference
+# Cluster issuer reference
 #
-# These cluster issuers are already configured in the cluster.
-# DO NOT create new issuers - just reference these in your Certificate resources.
+# These cluster issuers are already configured in the `bigboy` AKS cluster.
+# Do not create new issuers; reference these in your `Certificate` resources.
 
 # ============================================================================
 # PRODUCTION ISSUER: letsencrypt-prod

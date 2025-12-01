@@ -1,12 +1,12 @@
-# AI Cluster Ops - Bigboy AKS Onboarding
+# AI Cluster Ops – `bigboy` AKS Onboarding
 
-A comprehensive knowledge base and automation toolkit for rapidly onboarding new applications to the **bigboy** AKS cluster hosted in Azure.
+A comprehensive knowledge base and automation toolkit for rapidly onboarding new applications to the `bigboy` AKS cluster hosted in Azure.
 
 ## 🎯 Purpose
 
-This repository enables engineers (and AI assistants like GitHub Copilot) to quickly deploy new services to our Kubernetes cluster with minimal manual configuration. Simply provide Copilot with access to this repo and describe your app - it will generate all the necessary Kubernetes manifests, Helm charts, and CI/CD pipelines.
+This repository enables engineers (and AI assistants like GitHub Copilot) to quickly deploy new services to the Kubernetes cluster with minimal manual configuration. Provide Copilot with access to this repo and describe your app; it will generate the necessary Kubernetes manifests, Helm charts, and CI/CD pipelines following the guidelines in this repository.
 
-## 🏗️ Architecture Overview
+## 🏗️ Architecture overview
 
 ```mermaid
 graph TB
@@ -85,7 +85,7 @@ graph TB
     style ISTIO fill:#3B82F6
 ```
 
-## 🔄 Application Lifecycle
+## 🔄 Application lifecycle
 
 This repository supports the complete application lifecycle from onboarding to decommissioning.
 
@@ -108,7 +108,7 @@ graph LR
     style G fill:#EF4444
 ```
 
-## 🤖 GitHub Copilot Agent
+## 🤖 GitHub Copilot agent
 
 This repo includes a custom Copilot agent for automated deployments. Use `@aks-deploy` in Copilot Chat:
 
@@ -120,7 +120,7 @@ This repo includes a custom Copilot agent for automated deployments. Use `@aks-d
 @aks-deploy Create a Python Flask app with GitHub OAuth authentication
 ```
 
-### Agent Configuration Files
+### Agent configuration files
 
 | File | Purpose |
 |------|---------|
@@ -129,7 +129,7 @@ This repo includes a custom Copilot agent for automated deployments. Use `@aks-d
 | `.github/copilot-agent.yml` | Machine-readable agent configuration |
 | `.github/copilot-instructions.md` | Complete deployment instructions |
 
-### Self-Updating Agent
+### Self-updating agent
 
 The agent is configured to fetch the latest configuration from this repository before generating manifests. This ensures deployments always use current:
 - Cluster configuration
@@ -137,9 +137,9 @@ The agent is configured to fetch the latest configuration from this repository b
 - Security requirements
 - Key Vault identity
 
-## 📋 Quick Start
+## 📋 Quick start
 
-### For Engineers with Copilot
+### For engineers with Copilot
 
 1. **In your app repository**, ensure you have CLI access configured:
    ```bash
@@ -160,11 +160,11 @@ The agent is configured to fetch the latest configuration from this repository b
    - TLS certificate configuration
    - GitHub Actions workflow
 
-### Manual Onboarding
+### Manual onboarding
 
 See [docs/ONBOARDING.md](docs/ONBOARDING.md) for step-by-step instructions.
 
-## 📋 Complete Onboarding Pipeline
+## 📋 Complete onboarding pipeline
 
 This diagram shows the end-to-end self-service process for onboarding a new application:
 
@@ -222,9 +222,9 @@ sequenceDiagram
     AKS-->>Dev: 200 OK
 ```
 
-## 🔄 Full Application Lifecycle Management
+## 🔄 Full application lifecycle management
 
-### Phase 1: Planning & Design
+### Phase 1: Planning and design
 
 **What to decide:**
 - Application name and subdomain (e.g., `myapp.cat-herding.net`)
@@ -237,7 +237,7 @@ sequenceDiagram
 - Review `docs/ONBOARDING.md` for requirements
 - Check existing patterns in `manifests/examples/`
 
-### Phase 2: Generation (Self-Service with Copilot)
+### Phase 2: Generation (self-service with Copilot)
 
 ```bash
 # In your app repository

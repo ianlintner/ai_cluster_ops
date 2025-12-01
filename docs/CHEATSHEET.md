@@ -1,8 +1,8 @@
-# Bigboy Cluster Quick Reference
+# `bigboy` cluster quick reference
 
-## 🔑 Essential Commands
+## 🔑 Essential commands
 
-### Cluster Access
+### Cluster access
 
 ```bash
 # Login to Azure
@@ -15,7 +15,7 @@ az aks get-credentials --resource-group nekoc --name bigboy
 kubectl get nodes
 ```
 
-### Container Registry
+### Container registry
 
 ```bash
 # Login to ACR
@@ -29,9 +29,9 @@ docker push gabby.azurecr.io/myapp:latest
 az acr repository list --name gabby
 ```
 
-## 🚀 Quick Deploy
+## 🚀 Quick deploy
 
-### Helm (Recommended)
+### Helm (recommended)
 
 ```bash
 # Simple app
@@ -120,7 +120,7 @@ kubectl get secret cat-herding-wildcard-tls -n aks-istio-ingress
 
 ## 📊 Monitoring
 
-### Resource Usage
+### Resource usage
 
 ```bash
 # Pod resources
@@ -171,7 +171,7 @@ az network dns record-set a add-record \
 nslookup myapp.cat-herding.net
 ```
 
-## 🏷️ Common Values
+## 🏷️ Common values
 
 | Resource | Value |
 |----------|-------|
@@ -183,7 +183,7 @@ nslookup myapp.cat-herding.net
 | OTEL Endpoint | otel-collector.default.svc.cluster.local:4317 |
 | Namespace | default |
 
-## ⚠️ Common Mistakes
+## ⚠️ Common mistakes
 
 | Mistake | Solution |
 |---------|----------|
@@ -194,9 +194,9 @@ nslookup myapp.cat-herding.net
 | No health probe | Add `/health` endpoint |
 | Missing resource limits | Set requests and limits |
 
-## 📋 Manifest Templates
+## 📋 Manifest templates
 
-### Minimal Deployment
+### Minimal deployment
 
 ```yaml
 apiVersion: apps/v1
@@ -229,7 +229,7 @@ spec:
               memory: 512Mi
 ```
 
-### Minimal Service
+### Minimal service
 
 ```yaml
 apiVersion: v1
@@ -244,7 +244,7 @@ spec:
     app: myapp
 ```
 
-### Minimal VirtualService
+### Minimal `VirtualService`
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -264,9 +264,9 @@ spec:
               number: 80
 ```
 
-## 🎯 Copilot Prompt Examples
+## 🎯 Copilot prompt examples
 
-### Deploy New App
+### Deploy new app
 
 ```
 Deploy my Python Flask app to the bigboy cluster:
@@ -277,14 +277,14 @@ Deploy my Python Flask app to the bigboy cluster:
 - Need environment variables: DATABASE_URL, REDIS_URL
 ```
 
-### Add Authentication
+### Add authentication
 
 ```
 Add GitHub OAuth authentication to my existing deployment 'myapp'
 using the oauth2-proxy sidecar pattern
 ```
 
-### Create CI/CD Pipeline
+### Create CI/CD pipeline
 
 ```
 Create a GitHub Actions workflow that:
