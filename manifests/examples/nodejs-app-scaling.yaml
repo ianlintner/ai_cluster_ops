@@ -1,0 +1,86 @@
+# Minimal scaling policy examples for a single application
+#
+# This file shows a minimal-but-sane setup for:
+# - HorizontalPodAutoscaler (HPA)
+# - VerticalPodAutoscaler (VPA)
+# - PodDisruptionBudget (PDB)
+#
+# It is written to pair with the example Deployment in `nodejs-app.yaml`
+# named `nodejs-example` in the `default` namespace, but you can adapt it
+# by changing the `name`, `namespace`, and `selector` labels.
+
+---
+# HorizontalPodAutoscaler - scales pods based on CPU utilization
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nodejs-example
+  namespace: default
+  labels:
+    app: nodejs-example
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nodejs-example
+  # Keep this small for a minimal app; adjust as needed
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+---
+# VerticalPodAutoscaler - recommends resource requests for pods
+#
+# NOTE: VPA requires the VPA controller to be installed in the
+# cluster. In many production clusters this is already available.
+# This policy is conservative and only performs updates when pods
+# are recreated (no in-place eviction).
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: nodejs-example
+  namespace: default
+  labels:
+    app: nodejs-example
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nodejs-example
+  updatePolicy:
+    updateMode: "Off"   # Change to "Auto" or "Initial" when ready
+  resourcePolicy:
+    containerPolicies:
+      - containerName: nodejs-example
+        # Minimal sane bounds; keep close to Deployment defaults
+        minAllowed:
+          cpu: "50m"
+          memory: "64Mi"
+        maxAllowed:
+          cpu: "500m"
+          memory: "1Gi"
+
+---
+# PodDisruptionBudget - protect against too many pods being evicted
+# during voluntary disruptions (node drain, upgrades, etc.).
+#
+# With minAvailable: 1 and an HPA minReplicas of 2, at least one pod
+# will always remain running during disruptions.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: nodejs-example
+  namespace: default
+  labels:
+    app: nodejs-example
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: nodejs-example
