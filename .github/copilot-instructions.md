@@ -135,6 +135,31 @@ tolerations:
     effect: NoSchedule
 ```
 
+### 8. OpenTelemetry Integration (Required)
+
+Add these env vars for observability:
+
+```yaml
+env:
+  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    value: "http://otel-collector.default.svc.cluster.local:4317"
+  - name: OTEL_SERVICE_NAME
+    value: "<app-name>"
+  - name: OTEL_RESOURCE_ATTRIBUTES
+    value: "deployment.environment=production,service.namespace=default"
+  - name: OTEL_TRACES_SAMPLER
+    value: "parentbased_traceidratio"
+  - name: OTEL_TRACES_SAMPLER_ARG
+    value: "0.1"  # 10% sampling for production
+```
+
+**Observability Requirements:**
+- Use structured logging (JSON format) to stdout/stderr
+- Include trace_id and span_id in logs for correlation
+- Export metrics for key business events
+- Never log secrets, PII, or sensitive data
+- Implement /health, /ready, /live endpoints
+
 ## Deployment Templates by App Type
 
 ### Simple Web App (No Auth)
@@ -285,7 +310,7 @@ az role assignment create --role "Key Vault Secrets User" --assignee $KV_IDENTIT
 
 ## OpenTelemetry Integration
 
-Add these env vars for tracing:
+Add these env vars for tracing and metrics:
 
 ```yaml
 env:
@@ -294,8 +319,56 @@ env:
   - name: OTEL_SERVICE_NAME
     value: "<app-name>"
   - name: OTEL_RESOURCE_ATTRIBUTES
-    value: "deployment.environment=production"
+    value: "deployment.environment=production,service.namespace=default"
+  - name: OTEL_TRACES_SAMPLER
+    value: "parentbased_traceidratio"
+  - name: OTEL_TRACES_SAMPLER_ARG
+    value: "0.1"  # 10% sampling for production
 ```
+
+**Observability Best Practices:**
+
+1. **Structured Logging** - Use JSON format to stdout/stderr:
+   ```javascript
+   logger.info('Order created', { 
+     order_id: '12345',
+     amount: 99.99,
+     trace_id: traceId  // Include for correlation
+   });
+   ```
+
+2. **Trace Correlation** - Include trace_id and span_id in logs:
+   ```javascript
+   const span = trace.getActiveSpan();
+   const ctx = span.spanContext();
+   logger.info('Processing', { 
+     trace_id: ctx.traceId,
+     span_id: ctx.spanId
+   });
+   ```
+
+3. **Custom Spans** - Add spans for important operations:
+   ```javascript
+   const span = tracer.startSpan('process_payment');
+   span.setAttribute('payment.method', 'credit_card');
+   span.setAttribute('order.amount', 99.99);
+   // ... process payment
+   span.end();
+   ```
+
+4. **Metrics** - Export business metrics:
+   ```javascript
+   const orderCounter = meter.createCounter('orders.created');
+   orderCounter.add(1, { 'order.type': 'premium' });
+   ```
+
+5. **Never Log**:
+   - ❌ Passwords, secrets, API keys
+   - ❌ Credit card numbers
+   - ❌ Personal identifiable information (PII)
+   - ❌ Full request/response bodies
+
+See [docs/OBSERVABILITY.md](../docs/OBSERVABILITY.md) for complete language-specific examples.
 
 ## CI/CD GitHub Actions Template
 
