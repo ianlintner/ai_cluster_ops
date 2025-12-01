@@ -41,11 +41,15 @@ if [[ ! -e "$MANIFEST_PATH" ]]; then
     exit 1
 fi
 
-# Find all YAML files, excluding non-Kubernetes YAML (GitHub workflows, Helm charts)
+# Find all YAML files, excluding non-Kubernetes YAML (GitHub workflows, Helm charts, raw Helm templates/values)
 YAML_FILES=$(find "$MANIFEST_PATH" \
     \( -name "*.yaml" -o -name "*.yml" \) \
     ! -path "*/.github/workflows/*" \
-    ! -path "*/helm/*/Chart.yaml" 2>/dev/null || echo "")
+    ! -path "*/helm/*/Chart.yaml" \
+    ! -path "*/helm/*/values.yaml" \
+    ! -path "*/helm/*/values.yml" \
+    ! -path "*/helm/*/templates/*.yaml" \
+    ! -path "*/helm/*/templates/*.yml" 2>/dev/null || echo "")
 
 if [[ -z "$YAML_FILES" ]]; then
     log_fail "No YAML files found in $MANIFEST_PATH"
