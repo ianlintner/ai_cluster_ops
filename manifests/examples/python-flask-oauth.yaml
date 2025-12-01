@@ -1,0 +1,202 @@
+# Python Flask Example Application with OAuth2 Protection
+#
+# This example shows a Python Flask app protected by GitHub OAuth.
+
+---
+# Deployment with OAuth2 Proxy Sidecar
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-flask-oauth
+  namespace: default
+  labels:
+    app: python-flask-oauth
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-flask-oauth
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+        sidecar.istio.io/proxyCPU: "50m"
+        sidecar.istio.io/proxyCPULimit: "200m"
+        sidecar.istio.io/proxyMemory: "64Mi"
+        sidecar.istio.io/proxyMemoryLimit: "256Mi"
+        auth.cat-herding.net/provider: oauth2-proxy-sidecar
+        auth.cat-herding.net/domain: python-flask-oauth.cat-herding.net
+      labels:
+        app: python-flask-oauth
+        version: v1
+    spec:
+      securityContext:
+        fsGroup: 2000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      tolerations:
+        - key: kubernetes.azure.com/scalesetpriority
+          operator: Equal
+          value: spot
+          effect: NoSchedule
+      containers:
+        # OAuth2 Proxy Sidecar
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config=/etc/oauth2-proxy/oauth2_proxy.cfg
+            - --whitelist-domain=.cat-herding.net
+          env:
+            - name: OAUTH2_PROXY_REDIRECT_URL
+              value: https://auth.cat-herding.net/oauth2/callback
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-secret
+                  key: client-id
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-secret
+                  key: client-secret
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-secret
+                  key: cookie-secret
+            - name: OAUTH2_PROXY_UPSTREAMS
+              value: http://127.0.0.1:5000
+          ports:
+            - containerPort: 4180
+              name: proxy
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 2000
+          volumeMounts:
+            - name: oauth2-proxy-config
+              mountPath: /etc/oauth2-proxy
+              readOnly: true
+        
+        # Flask Application
+        - name: python-flask-oauth
+          image: gabby.azurecr.io/python-flask-oauth:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          env:
+            - name: FLASK_ENV
+              value: production
+            - name: PORT
+              value: "5000"
+            # OAuth2 proxy passes user info in headers
+            # Access via request.headers.get('X-Auth-Request-User')
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1001
+      volumes:
+        - name: oauth2-proxy-config
+          configMap:
+            name: oauth2-proxy-sidecar-config
+
+---
+# Service - Routes to OAuth2 Proxy port
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-flask-oauth
+  namespace: default
+  labels:
+    app: python-flask-oauth
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 4180  # OAuth2 Proxy port
+      protocol: TCP
+      name: http
+  selector:
+    app: python-flask-oauth
+
+---
+# VirtualService
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: python-flask-oauth
+  namespace: default
+  labels:
+    app: python-flask-oauth
+    app.kubernetes.io/component: web-application
+    app.kubernetes.io/name: python-flask-oauth
+spec:
+  gateways:
+    - aks-istio-ingress/cat-herding-gateway
+  hosts:
+    - python-flask-oauth.cat-herding.net
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: python-flask-oauth.default.svc.cluster.local
+            port:
+              number: 80

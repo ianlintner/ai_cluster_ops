@@ -1,0 +1,153 @@
+# Node.js Example Application
+#
+# This is a complete example showing all required components for deploying
+# a Node.js application to the bigboy cluster.
+
+---
+# ConfigMap for non-sensitive configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nodejs-example-config
+  namespace: default
+data:
+  LOG_LEVEL: "info"
+  NODE_ENV: "production"
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-example
+  namespace: default
+  labels:
+    app: nodejs-example
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nodejs-example
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+        sidecar.istio.io/proxyCPU: "50m"
+        sidecar.istio.io/proxyCPULimit: "200m"
+        sidecar.istio.io/proxyMemory: "64Mi"
+        sidecar.istio.io/proxyMemoryLimit: "256Mi"
+      labels:
+        app: nodejs-example
+        version: v1
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      tolerations:
+        - key: kubernetes.azure.com/scalesetpriority
+          operator: Equal
+          value: spot
+          effect: NoSchedule
+      containers:
+        - name: nodejs-example
+          image: gabby.azurecr.io/nodejs-example:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "3000"
+            - name: HOST
+              value: "0.0.0.0"
+          envFrom:
+            - configMapRef:
+                name: nodejs-example-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1001
+
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodejs-example
+  namespace: default
+  labels:
+    app: nodejs-example
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: nodejs-example
+
+---
+# VirtualService
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: nodejs-example
+  namespace: default
+  labels:
+    app: nodejs-example
+    app.kubernetes.io/component: web-application
+    app.kubernetes.io/name: nodejs-example
+spec:
+  gateways:
+    - aks-istio-ingress/cat-herding-gateway
+  hosts:
+    - nodejs-example.cat-herding.net
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: nodejs-example.default.svc.cluster.local
+            port:
+              number: 80

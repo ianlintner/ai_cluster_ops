@@ -1,0 +1,34 @@
+# Istio VirtualService Template
+# 
+# This template routes traffic from the shared gateway to your application.
+# The wildcard certificate on cat-herding-gateway handles TLS termination.
+#
+# Usage:
+#   Replace <APP_NAME> with your application name
+#   Replace <NAMESPACE> with your namespace (usually 'default')
+#   Replace <SERVICE_PORT> with your service port (80 for standard, 4180 for oauth2-proxy)
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: <APP_NAME>
+  namespace: <NAMESPACE>
+  labels:
+    app: <APP_NAME>
+    app.kubernetes.io/component: web-application
+    app.kubernetes.io/name: <APP_NAME>
+spec:
+  gateways:
+    # ALWAYS use the shared gateway - it has the wildcard TLS certificate
+    - aks-istio-ingress/cat-herding-gateway
+  hosts:
+    - <APP_NAME>.cat-herding.net
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: <APP_NAME>.<NAMESPACE>.svc.cluster.local
+            port:
+              number: <SERVICE_PORT>

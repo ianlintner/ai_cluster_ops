@@ -1,0 +1,162 @@
+# Simple Web Application Deployment Template
+#
+# Use this template for applications without authentication requirements.
+# Replace all <PLACEHOLDER> values with your app-specific values.
+#
+# Required replacements:
+#   <APP_NAME>: Your application name (lowercase, hyphen-separated)
+#   <IMAGE>: Container image (e.g., gabby.azurecr.io/myapp:latest)
+#   <CONTAINER_PORT>: Port your app listens on (e.g., 8080, 3000)
+#   <HEALTH_PATH>: Health check endpoint (e.g., /health, /healthz)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <APP_NAME>
+  namespace: default
+  labels:
+    app: <APP_NAME>
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: <APP_NAME>
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      annotations:
+        # Required: Enable Istio sidecar injection
+        sidecar.istio.io/inject: "true"
+        sidecar.istio.io/proxyCPU: "50m"
+        sidecar.istio.io/proxyCPULimit: "200m"
+        sidecar.istio.io/proxyMemory: "64Mi"
+        sidecar.istio.io/proxyMemoryLimit: "256Mi"
+      labels:
+        app: <APP_NAME>
+        version: v1
+    spec:
+      # Required: Security context
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # Required: Spot instance tolerance
+      tolerations:
+        - key: kubernetes.azure.com/scalesetpriority
+          operator: Equal
+          value: spot
+          effect: NoSchedule
+      
+      containers:
+        - name: <APP_NAME>
+          image: <IMAGE>
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: <CONTAINER_PORT>
+              protocol: TCP
+          
+          # Required: Resource limits
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+          
+          # Required: Health probes
+          livenessProbe:
+            httpGet:
+              path: <HEALTH_PATH>
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 2
+            failureThreshold: 3
+          
+          readinessProbe:
+            httpGet:
+              path: <HEALTH_PATH>
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          
+          startupProbe:
+            httpGet:
+              path: <HEALTH_PATH>
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 30
+          
+          # Required: Container security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1001
+          
+          # Optional: Environment variables
+          # env:
+          #   - name: LOG_LEVEL
+          #     value: "info"
+          #   - name: API_KEY
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: <APP_NAME>-secrets
+          #         key: API_KEY
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: <APP_NAME>
+  namespace: default
+  labels:
+    app: <APP_NAME>
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: <CONTAINER_PORT>
+      protocol: TCP
+      name: http
+  selector:
+    app: <APP_NAME>
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: <APP_NAME>
+  namespace: default
+  labels:
+    app: <APP_NAME>
+    app.kubernetes.io/component: web-application
+    app.kubernetes.io/name: <APP_NAME>
+spec:
+  gateways:
+    - aks-istio-ingress/cat-herding-gateway
+  hosts:
+    - <APP_NAME>.cat-herding.net
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: <APP_NAME>.default.svc.cluster.local
+            port:
+              number: 80

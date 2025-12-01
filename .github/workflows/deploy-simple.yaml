@@ -1,0 +1,63 @@
+# Simple Deployment Workflow (kubectl only)
+#
+# Use this template if you prefer raw manifests over Helm.
+# Copy to your app repository as .github/workflows/deploy.yaml
+
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: gabby.azurecr.io
+  IMAGE_NAME: ${{ github.event.repository.name }}
+  CLUSTER_NAME: bigboy
+  RESOURCE_GROUP: nekoc
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and Push
+        run: |
+          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS Context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ env.RESOURCE_GROUP }}
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          admin: 'false'
+          use-kubelogin: 'true'
+
+      - name: Update Deployment Image
+        run: |
+          kubectl set image deployment/${{ env.IMAGE_NAME }} \
+            ${{ env.IMAGE_NAME }}=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          
+          kubectl rollout status deployment/${{ env.IMAGE_NAME }} --timeout=5m
+
+      - name: Print Status
+        run: |
+          echo "✅ Deployed ${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo "🌐 App URL: https://${{ env.IMAGE_NAME }}.cat-herding.net"

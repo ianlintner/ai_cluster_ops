@@ -1,0 +1,14 @@
+apiVersion: v2
+name: app-template
+description: A Helm chart for deploying applications to the bigboy AKS cluster
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - aks
+  - kubernetes
+  - istio
+  - bigboy
+maintainers:
+  - name: Platform Team
+    email: platform@nekoc.net

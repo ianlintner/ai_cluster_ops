@@ -1,0 +1,40 @@
+# Destination Rule Template
+# 
+# Use this template for advanced traffic management:
+#   - Circuit breaking
+#   - Connection pool settings
+#   - Load balancer settings
+#   - mTLS configuration
+#
+# Optional - only create if you need custom traffic policies
+
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: <APP_NAME>
+  namespace: <NAMESPACE>
+spec:
+  host: <APP_NAME>.<NAMESPACE>.svc.cluster.local
+  trafficPolicy:
+    # Connection pool settings
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        h2UpgradePolicy: UPGRADE
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+    # Circuit breaker
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+    # Load balancer
+    loadBalancer:
+      simple: ROUND_ROBIN
+    # TLS (mTLS is automatic with Istio, but can be configured)
+    tls:
+      mode: ISTIO_MUTUAL

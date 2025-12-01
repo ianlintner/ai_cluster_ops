@@ -1,0 +1,170 @@
+# OAuth2 Proxy Sidecar Deployment Template
+#
+# This template adds GitHub OAuth authentication to your app using a sidecar pattern.
+# Traffic flows: Internet → Istio → OAuth2 Proxy (4180) → Your App (APP_PORT)
+#
+# Replace:
+#   <APP_NAME>: Your application name
+#   <IMAGE>: Your container image (e.g., gabby.azurecr.io/myapp:latest)
+#   <APP_PORT>: The port your application listens on (e.g., 8080)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <APP_NAME>
+  namespace: default
+  labels:
+    app: <APP_NAME>
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: <APP_NAME>
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      annotations:
+        # Istio sidecar injection
+        sidecar.istio.io/inject: "true"
+        sidecar.istio.io/proxyCPU: "50m"
+        sidecar.istio.io/proxyCPULimit: "200m"
+        sidecar.istio.io/proxyMemory: "64Mi"
+        sidecar.istio.io/proxyMemoryLimit: "256Mi"
+        # Auth metadata
+        auth.cat-herding.net/provider: oauth2-proxy-sidecar
+        auth.cat-herding.net/domain: <APP_NAME>.cat-herding.net
+      labels:
+        app: <APP_NAME>
+        version: v1
+    spec:
+      securityContext:
+        fsGroup: 2000
+        runAsNonRoot: true
+      tolerations:
+        - key: kubernetes.azure.com/scalesetpriority
+          operator: Equal
+          value: spot
+          effect: NoSchedule
+      containers:
+        # ==========================================
+        # OAuth2 Proxy Sidecar
+        # ==========================================
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config=/etc/oauth2-proxy/oauth2_proxy.cfg
+            - --whitelist-domain=.cat-herding.net
+          env:
+            - name: OAUTH2_PROXY_REDIRECT_URL
+              value: https://auth.cat-herding.net/oauth2/callback
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-secret
+                  key: client-id
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-secret
+                  key: client-secret
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-secret
+                  key: cookie-secret
+            - name: OAUTH2_PROXY_UPSTREAMS
+              value: http://127.0.0.1:<APP_PORT>
+          ports:
+            - containerPort: 4180
+              name: proxy
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 2000
+          volumeMounts:
+            - name: oauth2-proxy-config
+              mountPath: /etc/oauth2-proxy
+              readOnly: true
+            - name: oauth2-proxy-templates
+              mountPath: /templates
+              readOnly: true
+        # ==========================================
+        # Your Application
+        # ==========================================
+        - name: <APP_NAME>
+          image: <IMAGE>
+          imagePullPolicy: Always
+          ports:
+            - containerPort: <APP_PORT>
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1001
+          # Add your env vars here:
+          # env:
+          #   - name: DATABASE_URL
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: <APP_NAME>-secrets
+          #         key: DATABASE_URL
+      volumes:
+        - name: oauth2-proxy-config
+          configMap:
+            name: oauth2-proxy-sidecar-config
+        - name: oauth2-proxy-templates
+          configMap:
+            name: oauth2-proxy-templates

@@ -1,0 +1,28 @@
+# TLS Certificate Template
+# 
+# NOTE: For *.cat-herding.net subdomains, you DO NOT need to create a certificate!
+#       The wildcard certificate already exists: cat-herding-wildcard-tls
+#
+# Only use this template if you need:
+#   - A certificate for a domain not covered by the wildcard
+#   - A certificate in a different namespace
+#   - hugecat.net certificates
+#
+# The certificate uses DNS01 challenge via Azure DNS
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: <APP_NAME>-tls-cert
+  namespace: aks-istio-ingress  # Must be in the ingress namespace for Gateway to use
+spec:
+  secretName: <APP_NAME>-tls
+  duration: 2160h  # 90 days
+  renewBefore: 360h  # 15 days before expiry
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod  # or letsencrypt-staging for testing
+  dnsNames:
+    - "<HOSTNAME>"  # e.g., myapp.hugecat.net
+    # Add more hostnames if needed:
+    # - "api.myapp.hugecat.net"

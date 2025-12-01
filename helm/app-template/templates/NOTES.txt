@@ -1,0 +1,43 @@
+🎉 {{ include "app-template.fullname" . }} has been deployed!
+
+📋 Deployment Details:
+  - Name: {{ include "app-template.fullname" . }}
+  - Namespace: {{ .Release.Namespace }}
+  - Replicas: {{ .Values.app.replicas }}
+
+🌐 Access Your Application:
+{{- if .Values.istio.enabled }}
+  URL: https://{{ .Values.app.hostname }}
+{{- else }}
+  Service: {{ include "app-template.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+{{- end }}
+
+{{- if .Values.oauth2Proxy.enabled }}
+
+🔐 Authentication:
+  This app is protected by OAuth2 Proxy with GitHub authentication.
+  Users will be redirected to GitHub to login.
+{{- end }}
+
+📊 Useful Commands:
+
+  # Check deployment status
+  kubectl rollout status deployment/{{ include "app-template.fullname" . }} -n {{ .Release.Namespace }}
+
+  # View pods
+  kubectl get pods -l app={{ include "app-template.fullname" . }} -n {{ .Release.Namespace }}
+
+  # View logs
+  kubectl logs -l app={{ include "app-template.fullname" . }} -n {{ .Release.Namespace }} -f
+
+  # Test endpoint (after DNS propagates)
+  curl -I https://{{ .Values.app.hostname }}
+
+{{- if .Values.otel.enabled }}
+
+📈 Observability:
+  OpenTelemetry is enabled. Traces are being sent to:
+  {{ .Values.otel.endpoint }}
+{{- end }}
+
+💡 For troubleshooting, see: https://github.com/your-org/ai_cluster_ops/blob/main/docs/TROUBLESHOOTING.md

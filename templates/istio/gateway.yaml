@@ -1,0 +1,50 @@
+# Istio Gateway Template for Custom Domain
+# 
+# NOTE: For *.cat-herding.net subdomains, you DO NOT need to create a gateway!
+#       Use the existing shared gateway: aks-istio-ingress/cat-herding-gateway
+#
+# Only use this template if you need:
+#   - A custom domain not on cat-herding.net
+#   - Special TLS configuration
+#   - Different ingress gateway selector
+#
+# Usage:
+#   1. First create a TLS certificate (see certificates/ template)
+#   2. Wait for certificate to be issued
+#   3. Apply this gateway
+#   4. Create a VirtualService pointing to this gateway
+
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: <APP_NAME>-gateway
+  namespace: <NAMESPACE>
+  labels:
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/name: <APP_NAME>-gateway
+spec:
+  selector:
+    # Use the external ingress gateway for public traffic
+    istio: aks-istio-ingressgateway-external
+    # Use this for internal-only traffic:
+    # istio: aks-istio-ingressgateway-internal
+  servers:
+    # HTTP server (redirects to HTTPS)
+    - hosts:
+        - "<HOSTNAME>"
+      port:
+        name: http
+        number: 80
+        protocol: HTTP
+      tls:
+        httpsRedirect: true
+    # HTTPS server
+    - hosts:
+        - "<HOSTNAME>"
+      port:
+        name: https
+        number: 443
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: <SECRET_NAME>  # Secret name from Certificate resource

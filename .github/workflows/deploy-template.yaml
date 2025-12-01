@@ -1,0 +1,136 @@
+# Reusable Deployment Workflow for bigboy AKS Cluster
+#
+# Copy this file to your app repository as .github/workflows/deploy.yaml
+# Required secrets:
+#   - ACR_USERNAME: Azure Container Registry username
+#   - ACR_PASSWORD: Azure Container Registry password
+#   - AZURE_CREDENTIALS: Azure service principal JSON (for kubelogin)
+
+name: Build and Deploy to AKS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy to cluster'
+        required: true
+        default: 'true'
+        type: boolean
+
+env:
+  # Container Registry
+  REGISTRY: gabby.azurecr.io
+  IMAGE_NAME: ${{ github.event.repository.name }}
+  
+  # AKS Cluster
+  CLUSTER_NAME: bigboy
+  RESOURCE_GROUP: nekoc
+  
+  # Deployment
+  NAMESPACE: default
+  HOSTNAME: ${{ github.event.repository.name }}.cat-herding.net
+
+jobs:
+  build:
+    name: Build and Push Image
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to AKS
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' && (github.event.inputs.deploy != 'false')
+    environment: production
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS Context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ env.RESOURCE_GROUP }}
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          admin: 'false'
+          use-kubelogin: 'true'
+
+      - name: Create/Update Namespace
+        run: |
+          kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy with Helm
+        run: |
+          # Clone ai_cluster_ops for Helm chart
+          git clone https://github.com/your-org/ai_cluster_ops.git /tmp/ai_cluster_ops
+          
+          helm upgrade --install ${{ env.IMAGE_NAME }} /tmp/ai_cluster_ops/helm/app-template \
+            --namespace ${{ env.NAMESPACE }} \
+            --set app.name=${{ env.IMAGE_NAME }} \
+            --set app.image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set app.tag=${{ needs.build.outputs.image_tag }} \
+            --set app.hostname=${{ env.HOSTNAME }} \
+            --wait \
+            --timeout 5m
+
+      - name: Verify Deployment
+        run: |
+          kubectl rollout status deployment/${{ env.IMAGE_NAME }} -n ${{ env.NAMESPACE }} --timeout=3m
+          echo "✅ Deployment successful!"
+          echo "🌐 Your app is available at: https://${{ env.HOSTNAME }}"
+
+      - name: Health Check
+        run: |
+          sleep 30  # Wait for DNS/ingress to update
+          
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://${{ env.HOSTNAME }}/health || echo "000")
+          
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Health check passed!"
+          else
+            echo "⚠️ Health check returned $RESPONSE (may need more time to propagate)"
+          fi

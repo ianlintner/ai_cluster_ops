@@ -1,0 +1,148 @@
+# Default values for app-template
+# This is a YAML-formatted file.
+
+# Application configuration
+app:
+  # Name of the application (used for all resource names)
+  name: myapp
+  
+  # Container image configuration
+  image: gabby.azurecr.io/myapp
+  tag: latest
+  pullPolicy: Always
+  
+  # Container port your app listens on
+  containerPort: 8080
+  
+  # Number of replicas
+  replicas: 1
+  
+  # Hostname for external access (subdomain of cat-herding.net)
+  hostname: myapp.cat-herding.net
+
+# Resource configuration
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 512Mi
+
+# Health check configuration
+healthCheck:
+  enabled: true
+  path: /health
+  port: http
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 2
+    failureThreshold: 3
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+  startupProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 30
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+
+# Istio configuration
+istio:
+  enabled: true
+  gateway: aks-istio-ingress/cat-herding-gateway
+  sidecar:
+    inject: true
+    proxyCPU: "50m"
+    proxyCPULimit: "200m"
+    proxyMemory: "64Mi"
+    proxyMemoryLimit: "256Mi"
+
+# Security context
+security:
+  runAsNonRoot: true
+  runAsUser: 1001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  seccompProfile: RuntimeDefault
+
+# Spot instance tolerance
+tolerations:
+  - key: kubernetes.azure.com/scalesetpriority
+    operator: Equal
+    value: spot
+    effect: NoSchedule
+
+# OAuth2 proxy sidecar (optional)
+oauth2Proxy:
+  enabled: false
+  image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+  configMapName: oauth2-proxy-sidecar-config
+  secretName: oauth2-proxy-secret
+  redirectUrl: https://auth.cat-herding.net/oauth2/callback
+
+# Environment variables (optional)
+env: []
+# Example:
+# - name: LOG_LEVEL
+#   value: "info"
+# - name: API_KEY
+#   valueFrom:
+#     secretKeyRef:
+#       name: myapp-secrets
+#       key: api-key
+
+# ConfigMaps to mount as envFrom (optional)
+configMaps: []
+# Example:
+# - name: myapp-config
+
+# Secrets to mount as envFrom (optional)
+secrets: []
+# Example:
+# - name: myapp-secrets
+
+# Additional volumes (optional)
+volumes: []
+# Example:
+# - name: data
+#   persistentVolumeClaim:
+#     claimName: myapp-pvc
+
+# Volume mounts (optional)
+volumeMounts: []
+# Example:
+# - name: data
+#   mountPath: /app/data
+
+# OpenTelemetry configuration
+otel:
+  enabled: false
+  endpoint: http://otel-collector.default.svc.cluster.local:4317
+
+# Service account configuration
+serviceAccount:
+  create: false
+  name: ""
+  annotations: {}
+
+# Autoscaling (optional)
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+# Additional labels
+labels: {}
+
+# Additional annotations
+annotations: {}

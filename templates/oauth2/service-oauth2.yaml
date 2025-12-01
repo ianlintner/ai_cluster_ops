@@ -1,0 +1,21 @@
+# Service for OAuth2 Proxy Protected App
+#
+# Routes traffic to the OAuth2 proxy port (4180), not directly to your app.
+# Replace <APP_NAME> with your application name.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: <APP_NAME>
+  namespace: default
+  labels:
+    app: <APP_NAME>
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 4180  # OAuth2 proxy port, NOT your app port
+      protocol: TCP
+      name: http
+  selector:
+    app: <APP_NAME>

@@ -1,0 +1,28 @@
+# VirtualService for OAuth2 Protected App
+#
+# Routes external traffic to your service (which points to OAuth2 proxy).
+# Replace <APP_NAME> with your application name.
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: <APP_NAME>
+  namespace: default
+  labels:
+    app: <APP_NAME>
+    app.kubernetes.io/component: web-application
+    app.kubernetes.io/name: <APP_NAME>
+spec:
+  gateways:
+    - aks-istio-ingress/cat-herding-gateway
+  hosts:
+    - <APP_NAME>.cat-herding.net
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: <APP_NAME>.default.svc.cluster.local
+            port:
+              number: 80  # Service port (routes to OAuth2 proxy 4180)
