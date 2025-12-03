@@ -869,7 +869,19 @@ logger.error('Exception occurred', {
 const logger = winston.createLogger({
   transports: [
     new winston.transports.Console({
-| Response latency P99 | > 5 seconds |
+      handleExceptions: true,
+      handleRejections: true,
+      format: winston.format.json()
+    })
+  ]
+});
+
+// Or disable buffering at process level
+if (process.stdout.isTTY === false) {
+  process.stdout._handle.setBlocking(true);
+  process.stderr._handle.setBlocking(true);
+}
+```
 
 ---
 
