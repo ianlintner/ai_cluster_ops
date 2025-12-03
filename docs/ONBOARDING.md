@@ -340,6 +340,6 @@ kubectl delete -f k8s/
 
 ## Next steps
 
-- Set up [CI/CD with GitHub Actions](.github/workflows/deploy-template.yaml)
-- Configure [monitoring with OpenTelemetry](docs/OBSERVABILITY.md)
-- Add [OAuth2 authentication](templates/oauth2/README.md)
+- Set up [CI/CD with GitHub Actions](https://github.com/ianlintner/ai_cluster_ops/blob/main/.github/workflows/deploy-template.yaml)
+- Configure [monitoring with OpenTelemetry](OBSERVABILITY.md)
+- Add [OAuth2 authentication](https://github.com/ianlintner/ai_cluster_ops/blob/main/templates/oauth2/README.md)

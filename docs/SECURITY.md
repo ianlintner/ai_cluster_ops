@@ -425,7 +425,7 @@ spec:
 
 ### OAuth2 Proxy (GitHub OAuth)
 
-For web applications requiring authentication, use the OAuth2 proxy sidecar pattern. See [OAuth2 Templates](../templates/oauth2/README.md).
+For web applications requiring authentication, use the OAuth2 proxy sidecar pattern. See [OAuth2 Templates](https://github.com/ianlintner/ai_cluster_ops/blob/main/templates/oauth2/README.md).
 
 ### Service Account Tokens
 

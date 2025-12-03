@@ -1,0 +1,63 @@
+site_name: Bigboy AKS Ops
+site_description: >-
+  Documentation hub for deploying and operating workloads on the bigboy AKS cluster.
+site_url: https://ianlintner.github.io/ai_cluster_ops
+repo_url: https://github.com/ianlintner/ai_cluster_ops
+repo_name: ai_cluster_ops
+edit_uri: edit/main/docs/
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Onboarding Guide: ONBOARDING.md
+      - Quick Reference Cheatsheet: CHEATSHEET.md
+  - Cluster Operations:
+      - Cluster Overview: CLUSTER_OVERVIEW.md
+      - Security: SECURITY.md
+      - Observability: OBSERVABILITY.md
+      - Troubleshooting: TROUBLESHOOTING.md
+  - Decommissioning:
+      - Archive: decommissioned/README.md
+
+theme:
+  name: material
+  features:
+    - navigation.footer
+    - content.code.annotate
+    - content.code.copy
+    - content.action.edit
+    - navigation.top
+    - toc.integrate
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: purple
+      accent: deep purple
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: purple
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ianlintner
+      name: GitHub

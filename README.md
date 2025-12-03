@@ -6,6 +6,20 @@ A comprehensive knowledge base and automation toolkit for rapidly onboarding new
 
 This repository enables engineers (and AI assistants like GitHub Copilot) to quickly deploy new services to the Kubernetes cluster with minimal manual configuration. Provide Copilot with access to this repo and describe your app; it will generate the necessary Kubernetes manifests, Helm charts, and CI/CD pipelines following the guidelines in this repository.
 
+## 📚 Documentation site
+
+All of the markdown under `docs/` is rendered into a MkDocs Material site that automatically publishes to GitHub Pages whenever you update the documentation.
+
+- **Live site**: https://ianlintner.github.io/ai_cluster_ops/
+- **Workflow**: `.github/workflows/docs-site.yaml` builds and deploys the site on every push to `main` that touches docs or `mkdocs.yml`.
+- **Local preview**:
+
+  ```bash
+  python -m pip install --upgrade pip
+  pip install -r docs/requirements.txt
+  mkdocs serve
+  ```
+
 ## 🏗️ Architecture overview
 
 ```mermaid
